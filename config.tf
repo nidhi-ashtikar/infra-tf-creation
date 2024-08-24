@@ -9,6 +9,9 @@ module "ec2_instance" {
   port = "22"
   protocol = "tcp"
   #cidr_blocks = ["192.168.0.100/32"]
+  
+  
+  
 
 
 }
