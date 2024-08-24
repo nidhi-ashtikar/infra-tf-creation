@@ -10,9 +10,4 @@ module "ec2_instance" {
 }
 
 
-module "security_group" {
-  source = "git::https://github.com/nidhi-ashtikar/infra-tf-modules/blob/main/ec2/security_group.tf"
-  port = "22"
-  protocol = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
-}
+
