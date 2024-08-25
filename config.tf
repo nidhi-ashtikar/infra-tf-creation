@@ -9,7 +9,7 @@ module "ec2_instance" {
   port = "22"
   protocol = "tcp"
   instance_name = var.instance_name
-  
+   
   
   }
 
