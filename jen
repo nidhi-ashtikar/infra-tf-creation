@@ -2,7 +2,7 @@ pipeline {
     agent any
 
 
-    enviroment{
+    environment {
 
         GITHUB_CREDENTIALS = credentials('Github')
         GIT_USER_NAME = "nidhi-ashtikar"
