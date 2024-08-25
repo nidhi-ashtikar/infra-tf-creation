@@ -10,12 +10,7 @@ variable "instance_type" {
   type        = string
 }
 
-variable "root_volume_size" {
-  description = "The size of the root volume in GB"
-  type        = number
-}
 
-variable "userdata_script" {
-  description = "User data script to configure the instance"
-  type        = string
+variable "region" {
+  
 }

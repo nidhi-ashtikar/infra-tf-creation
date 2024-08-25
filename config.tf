@@ -1,6 +1,6 @@
 
 provider "aws" {
-  region = "us-east-1"  # Replace with your desired region
+  region = var.region  # Replace with your desired region
 }
 
 module "ec2_instance" {
@@ -8,13 +8,10 @@ module "ec2_instance" {
   instance_type = var.instance_type
   port = "22"
   protocol = "tcp"
-  #cidr_blocks = ["192.168.0.100/32"]
+  instance_name = var.instance_name
   
   
-  
-
-
-}
+  }
 
 
 
