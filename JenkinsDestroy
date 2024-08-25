@@ -2,11 +2,10 @@ pipeline {
     agent any
 
     parameters {
-        choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select in which region you want to deploy the resource', name: 'region')
-        string(name: 'instance_name', defaultValue: 'my-instance', description: 'EC2 Instance Name')
-        string(name: 'instance_type', defaultValue: 't2.micro', description: 'EC2 Instance Type')
         string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
         password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
+        string(name: 'instance_id', defaultValue: '', description: 'Enter the EC2 Instance ID to be destroyed')
+        choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select the region of the EC2 instance', name: 'region')
     }
 
     stages {    
@@ -28,33 +27,31 @@ pipeline {
             }
         }
 
-        stage('Terraform Plan') {
+        stage('Terraform Plan Destroy') {
             steps {
                 withEnv([
                     "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                     "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
                 ]) {
                     sh """
-                    terraform plan \
+                    terraform plan -destroy \
                     -var 'region=${params.region}' \
-                    -var 'instance_name=${params.instance_name}' \
-                    -var 'instance_type=${params.instance_type}'
+                    -var 'instance_id=${params.instance_id}'
                     """
                 }
             }
         }
 
-        stage('Terraform Apply') {
+        stage('Terraform Apply Destroy') {
             steps {
                 withEnv([
                     "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                     "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
                 ]) {
                     sh """
-                    terraform apply -auto-approve \
+                    terraform apply -destroy -auto-approve \
                     -var 'region=${params.region}' \
-                    -var 'instance_name=${params.instance_name}' \
-                    -var 'instance_type=${params.instance_type}'
+                    -var 'instance_id=${params.instance_id}'
                     """
                 }
             }
