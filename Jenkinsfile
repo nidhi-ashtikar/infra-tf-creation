@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     parameters {
+        string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
+        password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
         choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select in which region you want to deploy the resource', name: 'region')
         string(name: 'instance_name', defaultValue: 'my-instance', description: 'EC2 Instance Name')
         string(name: 'instance_type', defaultValue: 't2.micro', description: 'EC2 Instance Type')
-        string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
-        password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
     }
 
     stages {    
