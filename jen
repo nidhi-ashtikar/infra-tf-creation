@@ -1,0 +1,97 @@
+pipeline {
+    agent any
+
+    environment {
+        GITHUB_CREDENTIALS = credentials('Github') // Jenkins credentials ID for GitHub
+        GIT_USER_NAME = "nidhi-ashtikar" // Replace with your GitHub username
+        GIT_USER_EMAIL = "ashtikarnidhi19@gmail.com" // Replace with your email
+        PLAN_FILE = "terraform-plan.out"
+    }
+
+    parameters {
+        string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
+        password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
+        choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select the region of the EC2 instance', name: 'region')
+        string(name: 'branch_name', defaultValue: 'main', description: 'Branch to pull from and create PR against')
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: "${params.branch_name}", url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                withEnv([
+                    "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
+                    "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
+                ]) {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                withEnv([
+                    "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
+                    "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
+                ]) {
+                    sh "terraform plan -out=${env.PLAN_FILE} -var 'region=${params.region}'"
+                }
+            }
+        }
+
+        stage('Create New Branch') {
+            steps {
+                sh """
+                git config user.name "${env.GIT_USER_NAME}"
+                git config user.email "${env.GIT_USER_EMAIL}"
+                git checkout -b terraform-plan-branch
+                """
+            }
+        }
+
+        stage('Store Plan and Commit') {
+            steps {
+                sh """
+                git add ${env.PLAN_FILE}
+                git commit -m "Add Terraform plan output"
+                """
+            }
+        }
+
+        stage('Push Branch to GitHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                    sh """
+                    git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nidhi-ashtikar/infra-tf-creation.git terraform-plan-branch
+                    """
+                }
+            }
+        }
+
+        stage('Create Pull Request') {
+            steps {
+                script {
+                    def createPR = """
+                    curl -u ${env.GIT_USER_NAME}:${GITHUB_CREDENTIALS_PSW} \
+                    -X POST -H "Accept: application/vnd.github.v3+json" \
+                    https://api.github.com/repos/nidhi-ashtikar/infra-tf-creation/pulls \
+                    -d '{\"title\": \"Add Terraform plan output\", \"head\": \"terraform-plan-branch\", \"base\": \"${params.branch_name}\"}'
+                    """
+                    sh createPR
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up the workspace after the build is complete.
+            cleanWs()
+        }
+    }
+}
