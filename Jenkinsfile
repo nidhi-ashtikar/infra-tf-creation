@@ -8,8 +8,7 @@ pipeline {
         string(name: 'AWS_REGION', defaultValue: 'us-east-1', description: 'AWS Region')
         string(name: 'INSTANCE_NAME', defaultValue: 'my-instance', description: 'EC2 Instance Name')
         string(name: 'INSTANCE_TYPE', defaultValue: 't2.micro', description: 'EC2 Instance Type')
-        string(name: 'ROOT_VOLUME_SIZE', defaultValue: '8', description: 'Root Volume Size in GB')
-        text(name: 'USERDATA_SCRIPT', defaultValue: '', description: 'Userdata Script')
+        
     }
     
     environment {
