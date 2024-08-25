@@ -8,13 +8,6 @@ pipeline {
         choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select the region of the EC2 instance', name: 'region')
     }
 
-    stages {    
-        stage('Clone Repository') {
-            steps {
-                // Clone the GitHub repository containing the Terraform files
-                git branch: 'main', url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
-            }
-        }
 
         stage('Terraform Init') {
             steps {
