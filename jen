@@ -6,6 +6,7 @@ pipeline {
         GIT_USER_NAME = "nidhi-ashtikar"
         GIT_USER_EMAIL = "ashtikarnidhi19@gmail.com"
         PLAN_FILE = "terraform-plan.out"
+        PLAN_OUTPUT_FILE = "terraform-plan.txt"
     }
 
     parameters {
@@ -21,13 +22,9 @@ pipeline {
             }
         }
 
-        stage('Download Terraform Plan') {
+         stage('Download Terraform Plan') {
             steps {
-                script {
-                    if (!fileExists(env.PLAN_FILE)) {
-                        error "Terraform plan file ${env.PLAN_FILE} not found in the repository."
-                    }
-                }
+                sh "cp ${env.PLAN_FILE} ."
             }
         }
 

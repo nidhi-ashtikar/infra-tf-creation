@@ -57,7 +57,7 @@ pipeline {
                 sh """
                 git config user.name "${env.GIT_USER_NAME}"
                 git config user.email "${env.GIT_USER_EMAIL}"
-                git checkout -b terraform-plan-branch
+                git checkout -b terraform-plan-branch || echo "Branch terraform-plan-branch already exists, skipping branch creation."
                 """
             }
         }
