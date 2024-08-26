@@ -13,13 +13,7 @@ pipeline {
     }
 
     stages {
-        stage('Checkout Plan Branch') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                    git branch: "${params.PLAN_BRANCH}", url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
-                }
-            }
-        }
+        
 
         stage('Force Release Dependency Lock') {
             steps {
@@ -31,6 +25,14 @@ pipeline {
                     terraform init -upgrade
                     terraform providers lock -force
                     """
+                }
+            }
+        }
+
+        stage('Checkout Plan Branch') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                    git branch: "${params.PLAN_BRANCH}", url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
                 }
             }
         }
