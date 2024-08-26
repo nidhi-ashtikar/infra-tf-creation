@@ -1,15 +1,12 @@
 pipeline {
     agent any
 
-
     environment {
-
         GITHUB_CREDENTIALS = credentials('Github')
         GIT_USER_NAME = "nidhi-ashtikar"
         GIT_USER_EMAIL = "ashtikarnidhi19@gmail.com"
         PLAN_FILE = "terraform-plan.out"
         PLAN_OUTPUT_FILE = "terraform-plan.txt"
-
     }
 
     parameters {
@@ -46,7 +43,7 @@ pipeline {
                     "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
                 ]) {
                     sh """
-                    terraform plan -out=${env.PLAN_FILE}\
+                    terraform plan -out=${env.PLAN_FILE} \
                     -var 'region=${params.region}' \
                     -var 'instance_name=${params.instance_name}' \
                     -var 'instance_type=${params.instance_type}'
@@ -78,7 +75,7 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                     sh """
-                    git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nidhi-ashtikar/infra-tf-creation.git terraform-plan-branch
+                    git push https://\${GITHUB_USER}:\${GITHUB_TOKEN}@github.com/nidhi-ashtikar/infra-tf-creation.git terraform-plan-branch
                     """
                 }
             }
@@ -88,13 +85,11 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                     sh """
-                    gh pr create --repo https://github.com/nidhi-ashtikar/infra-tf-creation.git --head terraform-plan-branch --title "Terraform Plan" --body "$(cat ${env.PLAN_OUTPUT_FILE})"
+                    gh pr create --repo https://github.com/nidhi-ashtikar/infra-tf-creation.git --head terraform-plan-branch --title "Terraform Plan" --body "\$(cat ${env.PLAN_OUTPUT_FILE})"
                     """
                 }
             }
         }
-
-        
     }
 
     post {
@@ -104,3 +99,4 @@ pipeline {
         }
     }
 }
+
