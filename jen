@@ -23,7 +23,7 @@ pipeline {
                 ]) {
                     sh """
                     terraform init -upgrade
-                    terraform providers lock -force
+                    terraform providers lock 
                     """
                 }
             }
