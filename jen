@@ -8,6 +8,7 @@ pipeline {
         GIT_USER_NAME = "nidhi-ashtikar"
         GIT_USER_EMAIL = "ashtikarnidhi19@gmail.com"
         PLAN_FILE = "terraform-plan.out"
+        PLAN_OUTPUT_FILE = "terraform-plan.txt"
 
     }
 
@@ -17,7 +18,6 @@ pipeline {
         string(name: 'instance_name', defaultValue: 'my-instance', description: 'EC2 Instance Name')
         string(name: 'instance_type', defaultValue: 't2.micro', description: 'EC2 Instance Type')
         choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select in which region you want to deploy the resource', name: 'region')
-        string(name: 'branch_name', defaultValue: '', description: 'Branch to pull from and create PR against')
     }
 
     stages {    
@@ -68,7 +68,7 @@ pipeline {
         stage('Store Plan and Commit') {
             steps {
                 sh """
-                git add ${env.PLAN_FILE}
+                git add ${env.PLAN_FILE} ${env.PLAN_OUTPUT_FILE}
                 git commit -m "Add Terraform plan output"
                 """
             }
@@ -79,6 +79,16 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                     sh """
                     git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nidhi-ashtikar/infra-tf-creation.git terraform-plan-branch
+                    """
+                }
+            }
+        }
+
+        stage('Post Plan to PR') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                    sh """
+                    gh pr create --repo https://github.com/nidhi-ashtikar/infra-tf-creation.git --head terraform-plan-branch --title "Terraform Plan" --body "$(cat ${env.PLAN_OUTPUT_FILE})"
                     """
                 }
             }

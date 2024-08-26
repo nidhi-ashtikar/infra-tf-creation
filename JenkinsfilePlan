@@ -1,13 +1,22 @@
 pipeline {
     agent any
 
+
+    environment {
+
+        GITHUB_CREDENTIALS = credentials('Github')
+        GIT_USER_NAME = "nidhi-ashtikar"
+        GIT_USER_EMAIL = "ashtikarnidhi19@gmail.com"
+        PLAN_FILE = "terraform-plan.out"
+
+    }
+
     parameters {
         string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
         password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
         string(name: 'instance_name', defaultValue: 'my-instance', description: 'EC2 Instance Name')
         string(name: 'instance_type', defaultValue: 't2.micro', description: 'EC2 Instance Type')
         choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select in which region you want to deploy the resource', name: 'region')
-        
     }
 
     stages {    
@@ -36,10 +45,39 @@ pipeline {
                     "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
                 ]) {
                     sh """
-                    terraform plan \
+                    terraform plan -out=${env.PLAN_FILE}\
                     -var 'region=${params.region}' \
                     -var 'instance_name=${params.instance_name}' \
                     -var 'instance_type=${params.instance_type}'
+                    """
+                }
+            }
+        }
+
+        stage('Create New Branch') {
+            steps {
+                sh """
+                git config user.name "${env.GIT_USER_NAME}"
+                git config user.email "${env.GIT_USER_EMAIL}"
+                git checkout -b terraform-plan-branch
+                """
+            }
+        }
+
+        stage('Store Plan and Commit') {
+            steps {
+                sh """
+                git add ${env.PLAN_FILE}
+                git commit -m "Add Terraform plan output"
+                """
+            }
+        }
+
+        stage('Push Branch to GitHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                    sh """
+                    git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/nidhi-ashtikar/infra-tf-creation.git terraform-plan-branch
                     """
                 }
             }
