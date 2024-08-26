@@ -1,46 +1,38 @@
 pipeline {
     agent any
 
+    environment {
+        GITHUB_CREDENTIALS = credentials('Github')
+        PLAN_FILE = "terraform-plan.out"
+    }
+
     parameters {
         string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
         password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
-        string(name: 'instance_name', defaultValue: 'my-instance', description: 'EC2 Instance Name')
-        string(name: 'instance_type', defaultValue: 't2.micro', description: 'EC2 Instance Type')
-        choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select in which region you want to deploy the resource', name: 'region')
-        
+        string(name: 'PLAN_BRANCH', defaultValue: 'terraform-plan-branch', description: 'Branch where the Terraform plan is stored')
     }
 
-    stages {    
-        stage('Clone Repository') {
-            steps {
-                // Clone the GitHub repository containing the Terraform files
-                git branch: 'main', url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
-            }
-        }
+    stages {
+        
 
-        stage('Terraform Init') {
-            steps {
-                withEnv([
-                    "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
-                    "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
-                ]) {
-                    sh 'terraform init'
-                }
-            }
-        }
-
-        stage('Terraform Plan') {
+        stage('Force Release Dependency Lock') {
             steps {
                 withEnv([
                     "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                     "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
                 ]) {
                     sh """
-                    terraform plan \
-                    -var 'region=${params.region}' \
-                    -var 'instance_name=${params.instance_name}' \
-                    -var 'instance_type=${params.instance_type}'
+                    terraform init -upgrade
+                    terraform providers lock 
                     """
+                }
+            }
+        }
+
+        stage('Checkout Plan Branch') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                    git branch: "${params.PLAN_BRANCH}", url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
                 }
             }
         }
@@ -52,10 +44,7 @@ pipeline {
                     "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
                 ]) {
                     sh """
-                    terraform apply -auto-approve \
-                    -var 'region=${params.region}' \
-                    -var 'instance_name=${params.instance_name}' \
-                    -var 'instance_type=${params.instance_type}'
+                    terraform apply -auto-approve ${env.PLAN_FILE}
                     """
                 }
             }
@@ -64,7 +53,6 @@ pipeline {
 
     post {
         always {
-            // Clean up the workspace after the build is complete.
             cleanWs()
         }
     }
