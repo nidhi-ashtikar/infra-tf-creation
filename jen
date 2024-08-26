@@ -3,32 +3,21 @@ pipeline {
 
     environment {
         GITHUB_CREDENTIALS = credentials('Github')
-        GIT_USER_NAME = "nidhi-ashtikar"
-        GIT_USER_EMAIL = "ashtikarnidhi19@gmail.com"
         PLAN_FILE = "terraform-plan.out"
     }
 
     parameters {
         string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
         password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
-        choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select region to deploy the resource', name: 'region')
         string(name: 'PLAN_BRANCH', defaultValue: 'terraform-plan-branch', description: 'Branch where the Terraform plan is stored')
     }
 
     stages {
         stage('Checkout Plan Branch') {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                        git branch: "${params.PLAN_BRANCH}", url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
-                    }
+                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                    git branch: "${params.PLAN_BRANCH}", url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
                 }
-            }
-        }
-
-        stage('Download Terraform Plan') {
-            steps {
-                sh "cp ${env.PLAN_FILE} ."
             }
         }
 
@@ -38,6 +27,7 @@ pipeline {
                     "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                     "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
                 ]) {
+                    // Directly use the plan file
                     sh """
                     terraform apply ${env.PLAN_FILE}
                     """
