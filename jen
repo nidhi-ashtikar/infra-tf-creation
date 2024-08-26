@@ -9,6 +9,7 @@ pipeline {
     parameters {
         string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
         password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
+        choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select region to deploy the resource', name: 'region')
         string(name: 'PLAN_BRANCH', defaultValue: 'terraform-plan-branch', description: 'Branch where the Terraform plan is stored')
     }
 
@@ -27,7 +28,6 @@ pipeline {
                     "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                     "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
                 ]) {
-                    // Directly use the plan file
                     sh """
                     terraform apply ${env.PLAN_FILE}
                     """

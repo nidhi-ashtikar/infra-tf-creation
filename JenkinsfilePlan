@@ -96,6 +96,12 @@ pipeline {
                 }
             }
         }
+
+        stage('Archive Terraform Plan') {
+            steps {
+                archiveArtifacts artifacts: "${env.PLAN_FILE}", allowEmptyArchive: false
+            }
+        }
     }
 
     post {
