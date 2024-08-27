@@ -1,0 +1,64 @@
+@Library('Jenkins-shared-library') _
+
+pipeline {
+    agent any
+
+    environment {
+        GITHUB_CREDENTIALS = credentials('Github')
+        PLAN_FILE = "terraform-plan.out"
+    }
+
+    parameters {
+        string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
+        password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
+        string(name: 'PLAN_BRANCH', defaultValue: 'terraform-plan-branch', description: 'Branch where the Terraform plan is stored')
+    }
+
+    stages {
+        stage('Force Release Dependency Lock') {
+            steps {
+                dir('vpc') {
+                    withEnv([
+                        "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
+                        "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
+                    ]) {
+                        script {
+                            Release_Dependency_Lock()
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Checkout Plan Branch') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                    script {
+                        Checkout_Plan_Branch()
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                dir('vpc') {
+                    withEnv([
+                        "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
+                        "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
+                    ]) {
+                        script {
+                            Terraform_Apply()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
