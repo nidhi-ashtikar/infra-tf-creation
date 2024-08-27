@@ -15,8 +15,13 @@ pipeline {
         string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
         password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
         string(name: 'resource_name', defaultValue: 'my-instance', description: 'VPC Instance Name')
-        string(name: 'instance_name', defaultValue: 'my-instance', description: 'EC2 Instance Name')
-        string(name: 'instance_type', defaultValue: 't2.micro', description: 'EC2 Instance Type')
+        string(name: 'vpc_name', defaultValue: 'my-vpc', description: 'VPC Name')
+        string(name: 'vpc_cidr_block', defaultValue: '', description: 'vpc_cidr_block')
+        string(name: 'additional_tags', defaultValue: '', description: 'additional_tags')
+        string(name: 'public-subnet-cidr-1', defaultValue: '', description: 'public-subnet-cidr-1')
+        string(name: 'public-subnet-cidr-2', defaultValue: '', description: 'public-subnet-cidr-2')
+        string(name: 'private-subnet-cidr-1', defaultValue: '', description: 'private-subnet-cidr-1')
+        string(name: 'private-subnet-cidr-2', defaultValue: '', description: 'private-subnet-cidr-2')
         choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select in which region you want to deploy the resource', name: 'region')
     }
 
@@ -29,7 +34,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                dir('Ec2') {
+                dir('vpc') {
                     script {
                         Terraform_Init()
                     }
@@ -39,9 +44,9 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                dir('Ec2') {
+                dir('vpc') {
                     script {
-                        Terraform_Plan()
+                        Terraform_Plan_vpc()
                     }
                 }
             }
@@ -57,7 +62,7 @@ pipeline {
 
         stage('Store Plan and Commit') {
             steps {
-                dir('Ec2') {
+                dir('vpc') {
                     script {
                         Store_Plan_and_Commit()
                     }
