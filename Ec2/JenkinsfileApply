@@ -1,5 +1,4 @@
-@Library('Jenkins-shared-library')_
-
+@Library('Jenkins-shared-library') _
 
 pipeline {
     agent any
@@ -16,17 +15,16 @@ pipeline {
     }
 
     stages {
-        
-
         stage('Force Release Dependency Lock') {
             steps {
                 dir('Ec2') {
                     withEnv([
                         "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                         "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
-                    ]) 
-                    script {
-                        Release_Dependency_Lock()
+                    ]) {
+                        script {
+                            Release_Dependency_Lock()
+                        }
                     }
                 }
             }
@@ -35,7 +33,7 @@ pipeline {
         stage('Checkout Plan Branch') {
             steps {
                 script {
-                        Checkout_Plan_Branch()
+                    Checkout_Plan_Branch()
                 }
             }
         }
@@ -46,11 +44,10 @@ pipeline {
                     withEnv([
                         "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                         "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
-                    ]) 
-                    script {
-
-                        Terraform_Apply()
-                    }
+                    ]) {
+                        script {
+                            Terraform_Apply()
+                        }
                     }
                 }
             }
