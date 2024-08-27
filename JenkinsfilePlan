@@ -17,7 +17,7 @@ pipeline {
         choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select in which region you want to deploy the resource', name: 'region')
     }
 
-    stages {    
+    stages {
         stage('Clone Repository') {
             steps {
                 git branch: 'main', url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
@@ -41,7 +41,6 @@ pipeline {
                     "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                     "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
                 ]) {
-                    // Capture the Terraform plan output and save it to a file
                     sh """
                     terraform plan -out=${env.PLAN_FILE} \
                     -var 'region=${params.region}' \
@@ -54,11 +53,14 @@ pipeline {
 
         stage('Create New Branch') {
             steps {
-                sh """
-                git config user.name "${env.GIT_USER_NAME}"
-                git config user.email "${env.GIT_USER_EMAIL}"
-                git checkout -b terraform-plan-branch || echo "Branch terraform-plan-branch already exists, skipping branch creation."
-                """
+                script {
+                    def branchName = "${params.instance_name}-terraform-plan-branch"
+                    sh """
+                    git config user.name "${env.GIT_USER_NAME}"
+                    git config user.email "${env.GIT_USER_EMAIL}"
+                    git checkout -b ${branchName} || echo "Branch ${branchName} already exists, skipping branch creation."
+                    """
+                }
             }
         }
 
@@ -79,24 +81,29 @@ pipeline {
 
         stage('Push Branch to GitHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                    sh """
-                    git push https://\${GITHUB_USER}:\${GITHUB_TOKEN}@github.com/nidhi-ashtikar/infra-tf-creation.git terraform-plan-branch
-                    """
+                script {
+                    def branchName = "${params.instance_name}-terraform-plan-branch"
+                    withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                        sh """
+                        git push https://\${GITHUB_USER}:\${GITHUB_TOKEN}@github.com/nidhi-ashtikar/infra-tf-creation.git ${branchName}
+                        """
+                    }
                 }
             }
         }
 
         stage('Post Plan to PR') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                    sh """
-                    gh pr create --repo https://github.com/nidhi-ashtikar/infra-tf-creation.git --head terraform-plan-branch --title "Terraform Plan" --body "\$(cat ${env.PLAN_OUTPUT_FILE})"
-                    """
+                script {
+                    def branchName = "${params.instance_name}-terraform-plan-branch"
+                    withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                        sh """
+                        gh pr create --repo https://github.com/nidhi-ashtikar/infra-tf-creation.git --head ${branchName} --title "Terraform Plan" --body "\$(cat ${env.PLAN_OUTPUT_FILE})"
+                        """
+                    }
                 }
             }
         }
-
     }
 
     post {
