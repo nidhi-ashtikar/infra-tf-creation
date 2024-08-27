@@ -28,16 +28,20 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                script{
-                    Terraform_Init()
+                dir('Ec2'){
+                    script{
+                        Terraform_Init()
+                    }
                 }
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                script{
-                    Terraform_Plan()
+                dir('Ec2')
+                    script{
+                        Terraform_Plan()
+                    }
                 }
             }
         }
@@ -52,8 +56,10 @@ pipeline {
 
         stage('Store Plan and Commit') {
             steps {
-                script {
-                    Store_Plan_and_Commit()
+                dir('Ec2')
+                    script {
+                        Store_Plan_and_Commit()
+                    }
                 }
             }
         }

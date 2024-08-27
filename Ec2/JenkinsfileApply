@@ -1,51 +1,50 @@
 pipeline {
     agent any
 
+    environment {
+        GITHUB_CREDENTIALS = credentials('Github')
+        PLAN_FILE = "terraform-plan.out"
+    }
+
     parameters {
         string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
         password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
-        string(name: 'instance_id', defaultValue: '', description: 'Enter the EC2 Instance ID to be destroyed')
-        
+        string(name: 'PLAN_BRANCH', defaultValue: 'terraform-plan-branch', description: 'Branch where the Terraform plan is stored')
     }
 
-    stages {    
+    stages {
         
 
-
-        stage('Terraform Init') {
-            steps {
-                withEnv([
-                    "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
-                    "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
-                ]) {
-                    sh 'terraform init'
-                }
-            }
-        }
-
-        stage('Terraform Plan Destroy') {
+        stage('Force Release Dependency Lock') {
             steps {
                 withEnv([
                     "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                     "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
                 ]) {
                     sh """
-                    terraform plan -destroy \
-                    -var 'instance_id=${params.instance_id}'
+                    terraform init -upgrade
+                    terraform providers lock 
                     """
                 }
             }
         }
 
-        stage('Terraform Apply Destroy') {
+        stage('Checkout Plan Branch') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                    git branch: "${params.PLAN_BRANCH}", url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
             steps {
                 withEnv([
                     "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                     "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
                 ]) {
                     sh """
-                    terraform apply -destroy -auto-approve \
-                   -var 'instance_id=${params.instance_id}'
+                    terraform apply -auto-approve ${env.PLAN_FILE}
                     """
                 }
             }
@@ -54,7 +53,6 @@ pipeline {
 
     post {
         always {
-            // Clean up the workspace after the build is complete.
             cleanWs()
         }
     }
