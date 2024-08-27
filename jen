@@ -3,7 +3,7 @@
 pipeline {
     agent any
 
-    Ec2TerraformConfig.setEnvironmentAndParams()
+    TerraformConfig.setEnvironmentAndParams()
 
     stages {
         stage('Clone Repository') {
