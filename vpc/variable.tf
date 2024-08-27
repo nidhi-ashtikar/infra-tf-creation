@@ -29,3 +29,7 @@ variable "private-subnet-cidr-2" {
   
 }
 
+variable "env" {
+  
+}
+
