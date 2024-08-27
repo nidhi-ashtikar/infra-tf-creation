@@ -1,4 +1,4 @@
-@Library ("Jenkins-shared-library")_
+@Library('Jenkins-shared-library')_
 
 pipeline {
     agent any
@@ -28,8 +28,8 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                dir('Ec2'){
-                    script{
+                dir('Ec2') {
+                    script {
                         Terraform_Init()
                     }
                 }
@@ -38,8 +38,8 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                dir('Ec2')
-                    script{
+                dir('Ec2') {
+                    script {
                         Terraform_Plan()
                     }
                 }
@@ -56,7 +56,7 @@ pipeline {
 
         stage('Store Plan and Commit') {
             steps {
-                dir('Ec2')
+                dir('Ec2') {
                     script {
                         Store_Plan_and_Commit()
                     }
