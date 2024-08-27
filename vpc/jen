@@ -14,7 +14,7 @@ pipeline {
     parameters {
         string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
         password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
-        string(name: 'resource_name', defaultValue: 'my-instance', description: 'VPC Instance Name')
+        string(name: 'resource_name', defaultValue: 'vpc', description: 'VPC Instance Name')
         string(name: 'vpc_name', defaultValue: 'my-vpc', description: 'VPC Name')
         string(name: 'vpc_cidr_block', defaultValue: '', description: 'vpc_cidr_block')
         string(name: 'additional_tags', defaultValue: '', description: 'additional_tags')
