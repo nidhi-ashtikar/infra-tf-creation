@@ -16,12 +16,12 @@ pipeline {
         password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
         string(name: 'resource_name', defaultValue: 'vpc', description: 'VPC Instance Name')
         string(name: 'vpc_name', defaultValue: 'my-vpc', description: 'VPC Name')
-        string(name: 'vpc_cidr_block', defaultValue: '', description: 'vpc_cidr_block')
+        string(name: 'vpc_cidr_block', defaultValue: '10.0.0.0/16', description: 'vpc_cidr_block')
         string(name: 'additional_tags', defaultValue: '', description: 'additional_tags')
-        string(name: 'public-subnet-cidr-1', defaultValue: '', description: 'public-subnet-cidr-1')
-        string(name: 'public-subnet-cidr-2', defaultValue: '', description: 'public-subnet-cidr-2')
-        string(name: 'private-subnet-cidr-1', defaultValue: '', description: 'private-subnet-cidr-1')
-        string(name: 'private-subnet-cidr-2', defaultValue: '', description: 'private-subnet-cidr-2')
+        string(name: 'public-subnet-cidr-1', defaultValue: '10.0.10.0/24', description: 'public-subnet-cidr-1')
+        string(name: 'public-subnet-cidr-2', defaultValue: '10.0.30.0/24', description: 'public-subnet-cidr-2')
+        string(name: 'private-subnet-cidr-1', defaultValue: '10.0.0.0/26', description: 'private-subnet-cidr-1')
+        string(name: 'private-subnet-cidr-2', defaultValue: '10.0.1.0/26', description: 'private-subnet-cidr-2')
         choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select in which region you want to deploy the resource', name: 'region')
     }
 
