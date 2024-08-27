@@ -32,8 +32,10 @@ pipeline {
 
         stage('Checkout Plan Branch') {
             steps {
-                script {
-                    Checkout_Plan_Branch()
+                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                    script {
+                        Checkout_Plan_Branch()
+                    }
                 }
             }
         }
