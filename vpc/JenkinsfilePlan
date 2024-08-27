@@ -1,6 +1,6 @@
-@Library('Jenkins-shared-library') _
+@Library('Jenkins-shared-library')_
 
-pipeline {
+pipeline{
     agent any
 
     environment {
@@ -11,22 +11,18 @@ pipeline {
         PLAN_OUTPUT_FILE = "terraform-plan.txt"
     }
 
-    parameters {
+    parameters{
         string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
         password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
-        string(name: 'resource_name', defaultValue: 'vpc', description: 'VPC Instance Name')
-        string(name: 'vpc_name', defaultValue: 'my-vpc', description: 'VPC Name')
-        string(name: 'vpc_cidr_block', defaultValue: '10.0.0.0/16', description: 'vpc_cidr_block')
-        string(name: 'additional_tags', defaultValue: '', description: 'additional_tags')
-        string(name: 'public-subnet-cidr-1', defaultValue: '10.0.10.0/24', description: 'public-subnet-cidr-1')
-        string(name: 'public-subnet-cidr-2', defaultValue: '10.0.30.0/24', description: 'public-subnet-cidr-2')
-        string(name: 'private-subnet-cidr-1', defaultValue: '10.0.0.0/26', description: 'private-subnet-cidr-1')
-        string(name: 'private-subnet-cidr-2', defaultValue: '10.0.1.0/26', description: 'private-subnet-cidr-2')
         choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select in which region you want to deploy the resource', name: 'region')
+        string(name: 'cidr_block_vpc', defaultValue: '10.0.0.0/16', description: 'cidr_block_vpc')
+        string(name: 'cidr_block_public_subnet1', defaultValue: '10.0.0.0/24', description: 'cidr_block_public_subnet1')
+        string(name: 'cidr_block_public_subnet2', defaultValue: '10.0.1.0/24', description: 'cidr_block_public_subnet2')
+
     }
 
-    stages {
-        stage('Clone Repository') {
+    stages{
+        stage('Clone Repository'){
             steps {
                 git branch: 'main', url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
             }
@@ -44,28 +40,19 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                dir('vpc') {
-                    script {
-                        withEnv([
-                            "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
-                            "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
-                        ]) {
-                            sh """
-                            terraform plan -out=${env.PLAN_FILE} \
-                            -var 'region=${params.region}' \
-                            -var 'vpc_name=${params.vpc_name}' \
-                            -var 'vpc_cidr_block=${params.vpc_cidr_block}' \
-                            -var 'additional_tags=${params.additional_tags}' \
-                            -var 'public-subnet-cidr-1=${params.public-subnet-cidr-1}' \
-                            -var 'public-subnet-cidr-2=${params.public-subnet-cidr-2}' \
-                            -var 'private-subnet-cidr-1=${params.private-subnet-cidr-1}' \
-                            -var 'private-subnet-cidr-2=${params.private-subnet-cidr-2}' | tee ${env.PLAN_OUTPUT_FILE}
-                            """
+                withEnv([
+                    "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
+                    "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
+                ]) {
+                    dir('vpc') {
+                        script {
+                            Terraform_Plan_vpc()
                         }
                     }
                 }
             }
         }
+
 
         stage('Create New Branch') {
             steps {
@@ -100,6 +87,7 @@ pipeline {
                 }
             }
         }
+    
     }
 
     post {
@@ -107,4 +95,5 @@ pipeline {
             cleanWs()
         }
     }
+            
 }
