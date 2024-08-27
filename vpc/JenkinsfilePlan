@@ -1,4 +1,4 @@
-@Library('Jenkins-shared-library')_
+@Library('Jenkins-shared-library') _
 
 pipeline {
     agent any
@@ -14,8 +14,14 @@ pipeline {
     parameters {
         string(name: 'AWS_ACCESS_KEY_ID', defaultValue: '', description: 'Enter AWS Access Key ID')
         password(name: 'AWS_SECRET_ACCESS_KEY', defaultValue: '', description: 'Enter AWS Secret Access Key')
-        string(name: 'instance_name', defaultValue: 'my-instance', description: 'EC2 Instance Name')
-        string(name: 'instance_type', defaultValue: 't2.micro', description: 'EC2 Instance Type')
+        string(name: 'resource_name', defaultValue: 'vpc', description: 'VPC Instance Name')
+        string(name: 'vpc_name', defaultValue: 'my-vpc', description: 'VPC Name')
+        string(name: 'vpc_cidr_block', defaultValue: '10.0.0.0/16', description: 'vpc_cidr_block')
+        string(name: 'additional_tags', defaultValue: '', description: 'additional_tags')
+        string(name: 'public-subnet-cidr-1', defaultValue: '10.0.10.0/24', description: 'public-subnet-cidr-1')
+        string(name: 'public-subnet-cidr-2', defaultValue: '10.0.30.0/24', description: 'public-subnet-cidr-2')
+        string(name: 'private-subnet-cidr-1', defaultValue: '10.0.0.0/26', description: 'private-subnet-cidr-1')
+        string(name: 'private-subnet-cidr-2', defaultValue: '10.0.1.0/26', description: 'private-subnet-cidr-2')
         choice(choices: ['us-east-2', 'us-east-1', 'us-west-1'], description: 'Select in which region you want to deploy the resource', name: 'region')
     }
 
@@ -28,7 +34,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                dir('Ec2') {
+                dir('vpc') {
                     script {
                         Terraform_Init()
                     }
@@ -38,9 +44,24 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                dir('Ec2') {
+                dir('vpc') {
                     script {
-                        Terraform_Plan()
+                        withEnv([
+                            "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
+                            "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
+                        ]) {
+                            sh """
+                            terraform plan -out=${env.PLAN_FILE} \
+                            -var 'region=${params.region}' \
+                            -var 'vpc_name=${params.vpc_name}' \
+                            -var 'vpc_cidr_block=${params.vpc_cidr_block}' \
+                            -var 'additional_tags=${params.additional_tags}' \
+                            -var 'public-subnet-cidr-1=${params.public-subnet-cidr-1}' \
+                            -var 'public-subnet-cidr-2=${params.public-subnet-cidr-2}' \
+                            -var 'private-subnet-cidr-1=${params.private-subnet-cidr-1}' \
+                            -var 'private-subnet-cidr-2=${params.private-subnet-cidr-2}' | tee ${env.PLAN_OUTPUT_FILE}
+                            """
+                        }
                     }
                 }
             }
@@ -56,7 +77,7 @@ pipeline {
 
         stage('Store Plan and Commit') {
             steps {
-                dir('Ec2') {
+                dir('vpc') {
                     script {
                         Store_Plan_and_Commit()
                     }
