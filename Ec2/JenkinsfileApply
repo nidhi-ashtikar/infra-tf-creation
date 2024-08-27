@@ -21,11 +21,9 @@ pipeline {
                     withEnv([
                         "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                         "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
-                    ]) {
-                        sh """
-                        terraform init -upgrade
-                        terraform providers lock 
-                        """
+                    ]) 
+                    script {
+                        Release_Dependency_Lock()
                     }
                 }
             }
@@ -33,8 +31,8 @@ pipeline {
 
         stage('Checkout Plan Branch') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'Github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                    git branch: "${params.PLAN_BRANCH}", url: 'https://github.com/nidhi-ashtikar/infra-tf-creation.git'
+                script {
+                        Checkout_Plan_Branch()
                 }
             }
         }
@@ -45,10 +43,11 @@ pipeline {
                     withEnv([
                         "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
                         "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}"
-                    ]) {
-                        sh """
-                        terraform apply -auto-approve ${env.PLAN_FILE}
-                        """
+                    ]) 
+                    script {
+
+                        Terraform_Apply()
+                    }
                     }
                 }
             }
