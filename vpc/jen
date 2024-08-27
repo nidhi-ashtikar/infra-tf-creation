@@ -46,7 +46,7 @@ pipeline{
                 ]) {
                     dir('vpc') {
                         script {
-                            Terraform_Plan()
+                            Terraform_Plan_vpc()
                         }
                     }
                 }
